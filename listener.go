@@ -41,9 +41,12 @@ type MessageHandler func(message []byte) error
 // 		}
 // 	}()
 
-// 	return nil
-// }
+//		return nil
+//	}
 func (c *KafkaClient) Listen(topics []string, handler MessageHandler) error {
+	if len(c.config.Topics) == 0 {
+		return errors.New("no topics configured for consumer")
+	}
 	if c.reader == nil {
 		// Initialize consumer with specified topics
 		if err := c.initConsumer(topics); err != nil {

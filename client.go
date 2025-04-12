@@ -2,6 +2,7 @@ package mykafka
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-//KafkaClient represents a Kafka client that can produce and consume messages.
+// KafkaClient represents a Kafka client that can produce and consume messages.
 type KafkaClient struct {
 	config      *Config
 	writer      *kafka.Writer
@@ -19,7 +20,7 @@ type KafkaClient struct {
 	cancel      context.CancelFunc
 }
 
-//NewKafkaClient initializes a new Kafka client with the given configuration.
+// NewKafkaClient initializes a new Kafka client with the given configuration.
 func NewKafkaClient(config *Config) (*KafkaClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &KafkaClient{
@@ -42,7 +43,7 @@ func NewKafkaClient(config *Config) (*KafkaClient, error) {
 	return c, nil
 }
 
-//initRedis initializes the Redis client with the specified configuration.
+// initRedis initializes the Redis client with the specified configuration.
 func (c *KafkaClient) initRedis() error {
 	c.redisClient = redis.NewClient(&redis.Options{
 		Addr:     c.config.RedisAddr,
@@ -51,7 +52,8 @@ func (c *KafkaClient) initRedis() error {
 	})
 	return c.redisClient.Ping(c.ctx).Err()
 }
-//initProducer initializes the Kafka producer with the specified configuration.
+
+// initProducer initializes the Kafka producer with the specified configuration.
 func (c *KafkaClient) initProducer() error {
 	c.writer = &kafka.Writer{
 		Addr:         kafka.TCP(c.config.KafkaBrokers...),
@@ -61,8 +63,12 @@ func (c *KafkaClient) initProducer() error {
 	}
 	return nil
 }
-//initConsumer initializes the Kafka consumer with the specified configuration.
+
+// initConsumer initializes the Kafka consumer with the specified configuration.
 func (c *KafkaClient) initConsumer(topics []string) error {
+	if len(topics) == 0 {
+		return errors.New("cannot initialize consumer without topics")
+	}
 	c.reader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     c.config.KafkaBrokers,
 		GroupID:     c.config.ConsumerGroupID,
@@ -71,7 +77,8 @@ func (c *KafkaClient) initConsumer(topics []string) error {
 	})
 	return nil
 }
-//Close closes the Kafka client, including the producer, consumer, and Redis client.
+
+// Close closes the Kafka client, including the producer, consumer, and Redis client.
 func (c *KafkaClient) Close() error {
 	c.cancel()
 

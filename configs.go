@@ -18,6 +18,7 @@ type Config struct {
 	MaxRetries       int    // New: Maximum number of retry attempts
 	RetryQueue       string // New: Redis list name for retries
 	DeadLetterQueue  string
+	Topics           []string
 }
 
 func LoadConfig() *Config {
@@ -32,6 +33,7 @@ func LoadConfig() *Config {
 		MaxRetries:       getIntEnv("KAFKA_MAX_RETRIES", 3), // Default 3 retries
 		RetryQueue:       "kafka:retry",
 		DeadLetterQueue:  "kafka:dead-letter",
+		Topics:           strings.Split(os.Getenv("KAFKA_TOPICS"), ","),
 	}
 }
 
